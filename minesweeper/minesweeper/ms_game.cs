@@ -43,27 +43,7 @@ public  int             mines_rem;
 public  long            time;
 public  int             win_time;
 public  ms_face_status  face_status;
-private ms_game_status  status_stored;
-public  ms_game_status  status
-{
-get
-    {
-    return status_stored;
-    }
-set
-    {
-    status_stored = value;
-
-    if( value == ms_game_status.INACTIVE )
-        {
-        face_status = ms_face_status.ACTIVE;
-        }
-    else
-        {
-        face_status = (ms_face_status)value;
-        }
-    }
-}
+public  ms_game_status  status;
 
 /*--------------------------------------------------------------------
                             METHODS

@@ -112,7 +112,7 @@ ms_field field = ms_model.mine_field[x, y];
 /*----------------------------------------------------------
 Verify the game is active
 ----------------------------------------------------------*/
-if( ( ms_game_status.WON  == ms_model.status ) &&
+if( ( ms_game_status.WON  == ms_model.status ) ||
     ( ms_game_status.LOST == ms_model.status ) )
     {
     return;

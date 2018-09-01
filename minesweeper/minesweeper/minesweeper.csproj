@@ -43,6 +43,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Game1.cs" />
+    <Compile Include="ms_button_status.cs" />
     <Compile Include="ms_controller.cs" />
     <Compile Include="ms_face_status.cs" />
     <Compile Include="ms_field.cs" />
@@ -50,7 +51,8 @@
     <Compile Include="ms_game_status.cs" />
     <Compile Include="ms_gui_dimension.cs" />
     <Compile Include="ms_mine_status.cs" />
-    <Compile Include="ms_mouse_capture_state.cs" />
+    <Compile Include="ms_mouse_location.cs" />
+    <Compile Include="ms_mouse_state.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

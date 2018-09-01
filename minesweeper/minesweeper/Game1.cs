@@ -53,16 +53,14 @@ ms_controller           ms_ctlr;
 /*--------------------------------------
 Minesweeper view control
 --------------------------------------*/
+ms_mouse_state          mouse;
 ms_gui_dimension        dims;
-Boolean                 left_pressed;
-Boolean                 right_pressed;
-Boolean                 prev_left_pressed;
-Boolean                 prev_right_pressed;
-ms_mouse_capture_state  left_mouse_capture;
-ms_mouse_capture_state  right_mouse_capture;
-int                     game_time;
-ms_field                prev_field;
-ms_mine_status          prev_status;
+
+/*--------------------------------------
+Minesweeper view status
+--------------------------------------*/
+ms_face_status          face_status;
+ms_mine_status[,]       field_status;
 
 /*--------------------------------------
 Textures
@@ -125,22 +123,23 @@ base.Draw( gameTime );
 private void draw_field()
 {
 spriteBatch.Begin();
-for(int i = 0; i < ms_model.field_width; i++)
+
+for( int i = 0; i < ms_model.field_width; i++ )
+for( int j = 0; j < ms_model.field_height; j++ )
     {
-    for( int j = 0; j < ms_model.field_height; j++ )
-        {
-        /*----------------------------------------------------------
-        Draw each field according to its status
-        ----------------------------------------------------------*/
-        spriteBatch.Draw
-                    (
-                    fields[(int)ms_model.mine_field[i,j].mine_status],
-                    new Vector2( dims.field_x_min + dims.field_width * i, dims.field_y_min + dims.field_width * j ),
-                    Color.White
-                    );
-        }
+    /*----------------------------------------------------------
+    Draw each field according to its status
+    ----------------------------------------------------------*/
+    spriteBatch.Draw
+        (
+        fields[(int)field_status[i, j]],
+        new Vector2( dims.field_x_min + dims.field_width * i, dims.field_y_min + dims.field_width * j ),
+        Color.White
+        );
     }
+
 spriteBatch.End();
+
 } /* draw_field() */
 
 
@@ -215,12 +214,12 @@ Local variables
 ----------------------------------------------------------*/
 int[] mines = new int[3];
 int[] time  = new int[3];
+int game_time = 0;
 
 /*----------------------------------------------------------
 Calculate time
 ----------------------------------------------------------*/
-if( ( ms_model.status == ms_game_status.ACTIVE ) &&
-    ( ms_model.time != 0 ) )
+if( ms_model.status == ms_game_status.ACTIVE )
     {
     game_time = (int)( ( DateTime.Now.Ticks - ms_model.time ) / 10000000 );
     }
@@ -239,7 +238,7 @@ else
 /*----------------------------------------------------------
 Calculate mines remaining
 ----------------------------------------------------------*/
-if( ms_model.mines_rem > 0 )
+if( ( ms_model.mines_rem > 0 ) && ( ms_model.status != ms_game_status.LOST ) )
     {
     mines[2] = ms_model.mines_rem % 10;
     mines[1] = ( ms_model.mines_rem / 10 ) % 10;
@@ -264,7 +263,7 @@ for( int i = 0; i < 3; i++ )
 /*----------------------------------------------------------
 Draw face
 ----------------------------------------------------------*/
-spriteBatch.Draw( faces[(int)ms_model.face_status], new Vector2( dims.face_x_min, dims.face_y_min ), Color.White );
+spriteBatch.Draw( faces[(int)face_status], new Vector2( dims.face_x_min, dims.face_y_min ), Color.White );
 
 spriteBatch.End();
 
@@ -293,20 +292,13 @@ Initialize graphics
 graphics = new GraphicsDeviceManager(this);
 Content.RootDirectory = "Content";
 dims = new ms_gui_dimension();
+mouse = new ms_mouse_state();
 
 /*----------------------------------------------------------
 Save the game model and controller
 ----------------------------------------------------------*/
 ms_model = model;
 ms_ctlr = ctlr;
-
-/*----------------------------------------------------------
-Initialize mouse state
-----------------------------------------------------------*/
-prev_left_pressed = false;
-prev_right_pressed = false;
-left_mouse_capture = ms_mouse_capture_state.NONE;
-right_mouse_capture = ms_mouse_capture_state.NONE;
 
 /*----------------------------------------------------------
 Start new game
@@ -426,9 +418,21 @@ private void new_game
 /*----------------------------------------------------------
 Reset and start a new game
 ----------------------------------------------------------*/
-game_time = 0;
 dims.reset( width, height );
 ms_ctlr.new_game( width, height, mine_count );
+
+/*----------------------------------------------------------
+Initialize image status variables
+----------------------------------------------------------*/
+face_status = ms_face_status.ACTIVE;
+field_status = new ms_mine_status[width, height];
+
+for( int i = 0; i < width; i++  )
+for( int j = 0; j < height; j++ )
+    {
+    field_status[i, j] = new ms_mine_status();
+    field_status[i, j] = ms_model.mine_field[i, j].mine_status;
+    }
 
 /*----------------------------------------------------------
 Reset window size
@@ -472,225 +476,124 @@ protected override void Update
     )
 {
 /*----------------------------------------------------------
-Local variables
-----------------------------------------------------------*/
-int x;
-int y;
-int field_x = 0;
-int field_y = 0;
-ms_field field = null;
-Boolean in_field = false;
-Boolean on_face = false;
-
-/*----------------------------------------------------------
 Check if game should be exited
 ----------------------------------------------------------*/
-if( ( GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed ) ||
-    ( Keyboard.GetState().IsKeyDown(Keys.Escape) ) )
+if( GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed )
     {
     Exit();
     }
 
 /*----------------------------------------------------------
-Get the current mouse state
+Update mouse status
 ----------------------------------------------------------*/
-left_pressed  = ( ButtonState.Pressed == Mouse.GetState().LeftButton  );
-right_pressed = ( ButtonState.Pressed == Mouse.GetState().RightButton );
-x = Mouse.GetState().X;
-y = Mouse.GetState().Y;
+mouse.update( dims );
 
 /*----------------------------------------------------------
-Determine mouse location
+Check for searching a field
 ----------------------------------------------------------*/
-if( ( dims.field_x_min < x && x < dims.field_x_max ) &&
-    ( dims.field_y_min < y && y < dims.field_y_max ) )
+if( ( ms_mouse_location.FIELD == mouse.capture_left ) &&
+    ( ms_button_status.UNCLICKED == mouse.left ) )
     {
-    in_field = true;
-    field_x = ( x - dims.field_x_min ) / dims.field_width;
-    field_y = ( y - dims.field_y_min ) / dims.field_width;
-    field = ms_model.mine_field[field_x, field_y];
-    }
-else if( ( dims.face_x_min < x && x < dims.face_x_max ) &&
-         ( dims.face_y_min < y && y < dims.face_y_max ) )
-    {
-    on_face = true;
+    ms_ctlr.search_field( mouse.mine_loc.X, mouse.mine_loc.Y );
+    set_field_image();
     }
 
 /*----------------------------------------------------------
-Left button released
+Check for indenting a field
 ----------------------------------------------------------*/
-if( !left_pressed && prev_left_pressed )
+if( ( ms_button_status.HELD == mouse.left ) &&
+  ( ( ms_game_status.ACTIVE == ms_model.status ) ||
+    ( ms_game_status.INACTIVE == ms_model.status ) ) )
     {
-    /*----------------------------------------------------------
-    If left released on field, search the field
-    ----------------------------------------------------------*/
-    if( in_field && left_mouse_capture == ms_mouse_capture_state.FIELD )
-        {
-        if( prev_field != null )
-            {
-            field.mine_status = prev_status;
-            }
-        ms_ctlr.search_field( field_x, field_y );
-        ms_model.face_status = (ms_face_status)ms_model.status;
-        }
-    /*----------------------------------------------------------
-    If left released on face, start a new game
-    ----------------------------------------------------------*/
-    else if( on_face && left_mouse_capture == ms_mouse_capture_state.FACE )
-        {
-        new_game( 31, 16, 99 );
-        }
-    left_mouse_capture = ms_mouse_capture_state.NONE;
-    }
+    set_field_image();
 
-/*----------------------------------------------------------
-Left button pressed
-----------------------------------------------------------*/
-else if( left_pressed && !prev_left_pressed )
-    {
-    /*----------------------------------------------------------
-    If left button is pressed during the game on an unchecked
-    field, indent the field and save its previous state
-    ----------------------------------------------------------*/
-    if( in_field && ( ms_model.status == ms_game_status.ACTIVE ||
-                      ms_model.status == ms_game_status.INACTIVE ) )
+    if( ( ms_mouse_location.FIELD  == mouse.capture_left ) &&
+      ( ( ms_mine_status.UNCHECKED == ms_model.mine_field[mouse.mine_loc.X, mouse.mine_loc.Y].mine_status ) ||
+        ( ms_mine_status.QUESTION  == ms_model.mine_field[mouse.mine_loc.X, mouse.mine_loc.Y].mine_status ) ) )
         {
-        left_mouse_capture = ms_mouse_capture_state.FIELD;
-        ms_model.face_status = ms_face_status.MOUSE_DOWN;
-
-        if( ( field.mine_status == ms_mine_status.QUESTION ) ||
-            ( field.mine_status == ms_mine_status.UNCHECKED ) )
-            {
-            prev_field = field;
-            prev_status = field.mine_status;
-            field.mine_status = ms_mine_status.CHECKED_0;
-            }
-        else
-            {
-            prev_field = null;
-            }
-        }
-    /*----------------------------------------------------------
-    If left button pressed on face, indent the face
-    ----------------------------------------------------------*/
-    else if( on_face )
-        {
-        ms_model.face_status = ms_face_status.PRESSED;
-        left_mouse_capture = ms_mouse_capture_state.FACE;
+        field_status[mouse.mine_loc.X, mouse.mine_loc.Y] = ms_mine_status.CHECKED_0;
         }
     }
 
 /*----------------------------------------------------------
-Left button held
+Check for flagging a field
 ----------------------------------------------------------*/
-else if( left_pressed )
+if( ( ms_mouse_location.FIELD == mouse.capture_right ) &&
+    ( ms_button_status.UNCLICKED == mouse.right ) )
     {
-    /*----------------------------------------------------------
-    If left mouse is pressed on face, indent the face.
-    If left mouse leaves the face, restore the state.
-    ----------------------------------------------------------*/
-    if( left_mouse_capture == ms_mouse_capture_state.FACE )
-        {
-        if( on_face )
-            {
-            ms_model.face_status = ms_face_status.PRESSED;
-            }
-        else
-            {
-            if( ms_model.status == ms_game_status.INACTIVE )
-                {
-                ms_model.face_status = ms_face_status.ACTIVE;
-                }
-            else
-                {
-                ms_model.face_status = (ms_face_status)ms_model.status;
-                }
-            }
-        }
-    /*----------------------------------------------------------
-    If left mouse is pressed in field, indent the current field.
-    If left mouse leaves the field, lose capture.
-    ----------------------------------------------------------*/
-    else if( left_mouse_capture == ms_mouse_capture_state.FIELD )
-        {
-        if( !in_field )
-            {
-            ms_model.face_status = (ms_face_status)ms_model.status;
-            left_mouse_capture = ms_mouse_capture_state.NONE;
-            if( prev_field != null )
-                {
-                prev_field.mine_status = prev_status;
-                }
-            }
-        else
-            {
-            if( prev_field != field )
-                {
-                if( prev_field != null )
-                    {
-                    prev_field.mine_status = prev_status;
-                    }
-
-                if( ( field.mine_status == ms_mine_status.QUESTION ) ||
-                    ( field.mine_status == ms_mine_status.UNCHECKED ) )
-                    {
-                    prev_field = field;
-                    prev_status = field.mine_status;
-                    field.mine_status = ms_mine_status.CHECKED_0;
-                    }
-                else
-                    {
-                    prev_field = null;
-                    }
-                }
-            }
-        }
-    }
-
-
-/*----------------------------------------------------------
-Right button released
-----------------------------------------------------------*/
-if( !right_pressed && prev_right_pressed )
-    {
-    if( in_field && right_mouse_capture == ms_mouse_capture_state.FIELD )
-        {
-        ms_ctlr.flag_field( field_x, field_y );
-        }
-    right_mouse_capture = ms_mouse_capture_state.NONE;
+    ms_ctlr.flag_field( mouse.mine_loc.X, mouse.mine_loc.Y );
+    set_field_image();
     }
 
 /*----------------------------------------------------------
-Right button pressed
+Check for face clicked
 ----------------------------------------------------------*/
-else if( right_pressed && !prev_right_pressed )
+if( ( ms_mouse_location.FACE == mouse.capture_left ) &&
+    ( ms_mouse_location.FACE == mouse.cursor_location ) &&
+    ( ms_button_status.UNCLICKED == mouse.left ) )
     {
-    if( in_field )
-        {
-        right_mouse_capture = ms_mouse_capture_state.FIELD;
-        }
+    new_game( 31, 16, 99 );
     }
 
 /*----------------------------------------------------------
-Right button held
+Set the face status
 ----------------------------------------------------------*/
-else if( right_pressed )
+if( ( ms_mouse_location.FACE == mouse.capture_left ) &&
+    ( ms_mouse_location.FACE == mouse.cursor_location ) &&
+    ( ms_button_status.HELD == mouse.left ) )
     {
-    if( !in_field )
+    face_status = ms_face_status.PRESSED;
+    }
+else if( ( ms_mouse_location.FIELD == mouse.capture_left ) &&
+       ( ( ms_game_status.ACTIVE   == ms_model.status ) ||
+         ( ms_game_status.INACTIVE == ms_model.status ) ) )
+    {
+    face_status = ms_face_status.MOUSE_DOWN;
+    }
+else
+    {
+    switch( ms_model.status )
         {
-        right_mouse_capture = ms_mouse_capture_state.NONE;
+        case ms_game_status.WON:
+            face_status = ms_face_status.WON;
+            break;
+
+        case ms_game_status.LOST:
+            face_status = ms_face_status.LOST;
+            break;
+
+        case ms_game_status.INACTIVE:
+        case ms_game_status.ACTIVE:
+            face_status = ms_face_status.ACTIVE;
+            break;
         }
     }
-
-/*----------------------------------------------------------
-Save the previous mouse button states
-----------------------------------------------------------*/
-prev_left_pressed = left_pressed;
-prev_right_pressed = right_pressed;
 
 base.Update(gameTime);
 
 } /* Update() */
+
+
+/***********************************************************
+*
+*   Method:
+*       set_field_image
+*
+*   Description:
+*       Sets the field images to the model state
+*
+***********************************************************/
+
+private void set_field_image()
+{
+
+for( int i = 0; i < ms_model.field_width;  i++ )
+for( int j = 0; j < ms_model.field_height; j++ )
+    {
+    field_status[i, j] = ms_model.mine_field[i, j].mine_status;
+    }
+
+} /* set_field_image() */
 
 
 }

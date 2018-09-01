@@ -1,10 +1,10 @@
 /*********************************************************************
 *
 *   Enum:
-*       ms_mouse_capture_state
+*       ms_button_status
 *
 *   Description:
-*       Capture mouse clicks.
+*       Status of a mouse button.
 *
 *********************************************************************/
 
@@ -18,11 +18,12 @@ namespace minesweeper {
                              ENUM
 --------------------------------------------------------------------*/
 
-public enum ms_mouse_capture_state
+public enum ms_button_status
 {
-NONE,
-FIELD,
-FACE
+CLICKED,
+UNCLICKED,
+HELD,
+UNHELD
 }
 
 }
