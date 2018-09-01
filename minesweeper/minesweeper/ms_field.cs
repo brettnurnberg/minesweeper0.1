@@ -1,20 +1,10 @@
-﻿/*********************************************************************
+/*********************************************************************
 *
 *   Class:
-*       Program
+*       ms_field
 *
 *   Description:
-*       The main class for the application. Contains
-*       the entry point.
-*
-*   TODO:
-*       Separate view status from mine status - have a separate view status var
-*       add double mouse release
-*       Turn dimensions into vectors/rectangles
-*       Add menu bar
-*       Add options for choosing game level
-*       Add option for custom game
-*       Add high score tracking
+*       Contains data for a single minesweeper field
 *
 *********************************************************************/
 
@@ -38,13 +28,16 @@ namespace minesweeper {
                              CLASS
 --------------------------------------------------------------------*/
 
-public static class Program {
+public class ms_field {
 
 /*--------------------------------------------------------------------
                            ATTRIBUTES
 --------------------------------------------------------------------*/
-public static ms_game ms_model;
-public static ms_controller ms_ctlr;
+
+public  Boolean         is_mine     { get; set; }
+public  Boolean         is_clicked  { get; set; }
+public  int             mine_count  { get; set; }
+public  ms_mine_status  mine_status { get; set; }
 
 /*--------------------------------------------------------------------
                             METHODS
@@ -53,25 +46,24 @@ public static ms_controller ms_ctlr;
 /***********************************************************
 *
 *   Method:
-*       Main
+*       ms_field
 *
 *   Description:
-*       Entry point for the application.
+*       Constructor.
 *
 ***********************************************************/
 
-[STAThread]
-static void Main()
+public ms_field()
 {
-ms_model = new ms_game();
-ms_ctlr = new ms_controller( ms_model );
+/*----------------------------------------------------------
+Initialize mine field
+----------------------------------------------------------*/
+is_mine = false;
+is_clicked = false;
+mine_count = 0;
+mine_status = ms_mine_status.UNCHECKED;
 
-using ( Game1 game = new Game1( ms_model, ms_ctlr ) )
-    {
-    game.Run();
-    }
-
-} /* Main() */
+} /* ms_field() */
 
 
 }
