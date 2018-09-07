@@ -42,17 +42,23 @@
     <ApplicationManifest>app.manifest</ApplicationManifest>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="DrawShape.cs" />
     <Compile Include="Game1.cs" />
-    <Compile Include="ms_button_status.cs" />
+    <Compile Include="button_state_type.cs" />
+    <Compile Include="mouse_state_type.cs" />
     <Compile Include="ms_controller.cs" />
     <Compile Include="ms_face_status.cs" />
     <Compile Include="ms_field.cs" />
     <Compile Include="ms_game.cs" />
     <Compile Include="ms_game_status.cs" />
     <Compile Include="ms_gui_dimension.cs" />
+    <Compile Include="menu_type.cs" />
+    <Compile Include="menu_dimension_type.cs" />
+    <Compile Include="menu_item_type.cs" />
     <Compile Include="ms_mine_status.cs" />
     <Compile Include="ms_mouse_location.cs" />
     <Compile Include="ms_mouse_state.cs" />
+    <Compile Include="toolbar_type.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
@@ -117,7 +123,7 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="$(MSBuildExtensionsPath)\MonoGame\v3.0\MonoGame.Content.Builder.targets" />
-  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it.
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">
   </Target>

@@ -1,7 +1,7 @@
 /*********************************************************************
 *
 *   Enum:
-*       ms_button_status
+*       button_state_type
 *
 *   Description:
 *       Status of a mouse button.
@@ -18,7 +18,7 @@ namespace minesweeper {
                              ENUM
 --------------------------------------------------------------------*/
 
-public enum ms_button_status
+public enum button_state_type
 {
 CLICKED,
 UNCLICKED,

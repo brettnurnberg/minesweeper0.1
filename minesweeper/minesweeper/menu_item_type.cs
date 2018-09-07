@@ -1,21 +1,11 @@
-﻿/*********************************************************************
+/*********************************************************************
 *
 *   Class:
-*       Program
+*       menu_item_type
 *
 *   Description:
-*       The main class for the application. Contains
-*       the entry point.
-*
-*   TODO:
-*       add double mouse release
-*       Add option for custom game
-*       Add high score tracking
-*
-*   BUGS:
-*       When should mine count go to zero?
-*       Game time should only zero when a new game is started
-*       Menu Item highlight should be as wide as the menu
+*       Represents single item in a menu
+*           Should contain the name, size, and callback function
 *
 *********************************************************************/
 
@@ -24,6 +14,8 @@
 --------------------------------------------------------------------*/
 
 using System;
+using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Input;
 
 /*--------------------------------------------------------------------
                            NAMESPACE
@@ -35,18 +27,21 @@ namespace minesweeper {
                            DELEGATES
 --------------------------------------------------------------------*/
 
+public delegate void menu_item_handler();
+
 /*--------------------------------------------------------------------
                              CLASS
 --------------------------------------------------------------------*/
 
-public static class Program {
+public class menu_item_type {
 
 /*--------------------------------------------------------------------
                            ATTRIBUTES
 --------------------------------------------------------------------*/
-public static ms_game ms_model;
-public static ms_controller ms_ctlr;
 
+private menu_item_handler hndlr;
+public  string name;
+public  Boolean highlight;
 /*--------------------------------------------------------------------
                             METHODS
 --------------------------------------------------------------------*/
@@ -54,26 +49,39 @@ public static ms_controller ms_ctlr;
 /***********************************************************
 *
 *   Method:
-*       Main
+*       menu_item_type
 *
 *   Description:
-*       Entry point for the application.
+*       Constructor.
 *
 ***********************************************************/
 
-[STAThread]
-static void Main()
+public menu_item_type( string item_name, menu_item_handler item_hndlr )
 {
-ms_model = new ms_game();
-ms_ctlr = new ms_controller( ms_model );
+/*----------------------------------------------------------
+Initialize
+----------------------------------------------------------*/
+name = item_name;
+hndlr = item_hndlr;
+highlight = false;
 
-using ( Game1 game = new Game1( ms_model, ms_ctlr ) )
-    {
-    game.Run();
-    }
+} /* menu_item_type() */
 
-} /* Main() */
 
+/***********************************************************
+*
+*   Method:
+*       handler
+*
+*   Description:
+*       Constructor.
+*
+***********************************************************/
+
+public void handler()
+{
+hndlr();
+} /* menu_item_type() */
 
 }
 }

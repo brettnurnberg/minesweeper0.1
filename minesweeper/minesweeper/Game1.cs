@@ -55,6 +55,8 @@ Minesweeper view control
 --------------------------------------*/
 ms_mouse_state          mouse;
 ms_gui_dimension        dims;
+toolbar_type             toolbar;
+menu_type                 game_menu;
 
 /*--------------------------------------
 Minesweeper view status
@@ -74,6 +76,11 @@ Texture2D               border_v;
 Texture2D[]             dig_vals;
 Texture2D[]             faces;
 Texture2D[]             fields;
+
+/*--------------------------------------
+Fonts
+--------------------------------------*/
+SpriteFont              menu_font;
 
 /*--------------------------------------------------------------------
                             METHODS
@@ -95,9 +102,9 @@ protected override void Draw
     )
 {
 /*----------------------------------------------------------
-Clear screen to gray
+Draw background rectangle
 ----------------------------------------------------------*/
-GraphicsDevice.Clear( new Color(189, 189, 189) );
+DrawShape.Rectangle( dims.inner_header, new Color(189, 189, 189) );
 
 /*----------------------------------------------------------
 Draw all game aspects
@@ -105,6 +112,7 @@ Draw all game aspects
 draw_game();
 draw_header();
 draw_field();
+toolbar.draw();
 
 base.Draw( gameTime );
 } /* Draw() */
@@ -133,7 +141,7 @@ for( int j = 0; j < ms_model.field_height; j++ )
     spriteBatch.Draw
         (
         fields[(int)field_status[i, j]],
-        new Vector2( dims.field_x_min + dims.field_width * i, dims.field_y_min + dims.field_width * j ),
+        new Vector2( dims.mine_field.X + dims.field_image.Width * i, dims.mine_field.Y + dims.field_image.Height * j ),
         Color.White
         );
     }
@@ -158,11 +166,11 @@ private void draw_game()
 /*----------------------------------------------------------
 Get game dimensions
 ----------------------------------------------------------*/
-int x1 = 0;
-int x2 = dims.view_width - dims.border_width;
-int y1 = 0;
-int y2 = dims.header_height - dims.border_width;
-int y3 = dims.view_height - dims.border_width;
+int x1 = dims.view.X;
+int x2 = dims.view.Width - dims.border_image.Width;
+int y1 = dims.outer_header.Y;
+int y2 = dims.mine_field.Y - dims.border_image.Width;
+int y3 = dims.view.Height - dims.border_image.Width;
 
 spriteBatch.Begin();
 
@@ -177,20 +185,20 @@ spriteBatch.Draw( border_br, new Vector2( x2 , y3 ), Color.White );
 /*----------------------------------------------------------
 Draw horizontal borders
 ----------------------------------------------------------*/
-for( int i = 0; i < dims.field_count_x;  i++ )
+for( int i = 0; i < ms_model.field_width;  i++ )
     {
-    spriteBatch.Draw( border_h, new Vector2( dims.field_x_min + dims.field_width * i, y1 ), Color.White );
-    spriteBatch.Draw( border_h, new Vector2( dims.field_x_min + dims.field_width * i, y2 ), Color.White );
-    spriteBatch.Draw( border_h, new Vector2( dims.field_x_min + dims.field_width * i, y3 ), Color.White );
+    spriteBatch.Draw( border_h, new Vector2( dims.mine_field.X + dims.field_image.Width * i, y1 ), Color.White );
+    spriteBatch.Draw( border_h, new Vector2( dims.mine_field.X + dims.field_image.Width * i, y2 ), Color.White );
+    spriteBatch.Draw( border_h, new Vector2( dims.mine_field.X + dims.field_image.Width * i, y3 ), Color.White );
     }
 
 /*----------------------------------------------------------
 Draw vertical borders
 ----------------------------------------------------------*/
-for( int i = 0; i < dims.field_count_y;  i++ )
+for( int i = 0; i < ms_model.field_height;  i++ )
     {
-    spriteBatch.Draw( border_v, new Vector2( x1, dims.field_y_min + dims.field_width * i ), Color.White );
-    spriteBatch.Draw( border_v, new Vector2( x2, dims.field_y_min + dims.field_width * i ), Color.White );
+    spriteBatch.Draw( border_v, new Vector2( x1, dims.mine_field.Y + dims.field_image.Height * i ), Color.White );
+    spriteBatch.Draw( border_v, new Vector2( x2, dims.mine_field.Y + dims.field_image.Height * i ), Color.White );
     }
 
 spriteBatch.End();
@@ -256,14 +264,14 @@ Draw time and mine counters
 ----------------------------------------------------------*/
 for( int i = 0; i < 3; i++ )
     {
-    spriteBatch.Draw( dig_vals[mines[i]], new Vector2( dims.minecount_x + dims.digval_width * i, dims.minecount_y ), Color.White );
-    spriteBatch.Draw( dig_vals[time[i]],  new Vector2( dims.time_x      + dims.digval_width * i, dims.time_y      ), Color.White );
+    spriteBatch.Draw( dig_vals[mines[i]], new Vector2( dims.minecount.X + dims.digval_image.Width * i, dims.minecount.Y ), Color.White );
+    spriteBatch.Draw( dig_vals[time[i]],  new Vector2( dims.time.X      + dims.digval_image.Width * i, dims.time.Y      ), Color.White );
     }
 
 /*----------------------------------------------------------
 Draw face
 ----------------------------------------------------------*/
-spriteBatch.Draw( faces[(int)face_status], new Vector2( dims.face_x_min, dims.face_y_min ), Color.White );
+spriteBatch.Draw( faces[(int)face_status], new Vector2( dims.face.X, dims.face.Y ), Color.White );
 
 spriteBatch.End();
 
@@ -280,11 +288,7 @@ spriteBatch.End();
 *
 ***********************************************************/
 
-public Game1
-    (
-    ms_game         model,
-    ms_controller   ctlr
-    )
+public Game1( ms_game model, ms_controller ctlr )
 {
 /*----------------------------------------------------------
 Initialize graphics
@@ -293,6 +297,14 @@ graphics = new GraphicsDeviceManager(this);
 Content.RootDirectory = "Content";
 dims = new ms_gui_dimension();
 mouse = new ms_mouse_state();
+toolbar = new toolbar_type();
+game_menu = new menu_type( "Game" );
+
+game_menu.add_item( "New Game",     new_game_same         );
+game_menu.add_item( "Beginner",     new_game_beginner     );
+game_menu.add_item( "Intermediate", new_game_intermediate );
+game_menu.add_item( "Expert",       new_game_expert       );
+game_menu.add_item( "Exit",         Exit                  );
 
 /*----------------------------------------------------------
 Save the game model and controller
@@ -303,7 +315,7 @@ ms_ctlr = ctlr;
 /*----------------------------------------------------------
 Start new game
 ----------------------------------------------------------*/
-new_game( 31, 16, 99 );
+new_game( 9, 9, 10 );
 
 } /* Game1() */
 
@@ -395,7 +407,50 @@ fields[12] = Content.Load<Texture2D>("mine_sel");
 fields[13] = Content.Load<Texture2D>("mine");
 fields[14] = Content.Load<Texture2D>("mine_not");
 
+/*----------------------------------------------------------
+Initialize toolbar
+----------------------------------------------------------*/
+menu_font = Content.Load<SpriteFont>("MenuFont");
+toolbar.Initialize( spriteBatch, menu_font );
+
+/*----------------------------------------------------------
+Load textures for drawing shapes
+----------------------------------------------------------*/
+DrawShape.Initialize( spriteBatch );
+DrawShape.LoadTextures( Content );
+
+/*----------------------------------------------------------
+Run code that requires all initialization to be done
+----------------------------------------------------------*/
+init_complete();
+
 } /* LoadContent() */
+
+
+/***********************************************************
+*
+*   Method:
+*       init_complete
+*
+*   Description:
+*       Query for any required services and load any
+*       non-graphic related content.
+*
+***********************************************************/
+
+private void init_complete()
+{
+/*----------------------------------------------------------
+Add menus to toolbar
+----------------------------------------------------------*/
+toolbar.add_menu( game_menu );
+
+/*----------------------------------------------------------
+Start new game
+----------------------------------------------------------*/
+new_game( 9, 9, 10 );
+
+} /* init_complete() */
 
 
 /***********************************************************
@@ -437,11 +492,79 @@ for( int j = 0; j < height; j++ )
 /*----------------------------------------------------------
 Reset window size
 ----------------------------------------------------------*/
-graphics.PreferredBackBufferWidth = dims.view_width;
-graphics.PreferredBackBufferHeight = dims.view_height;
+graphics.PreferredBackBufferWidth = dims.view.Width;
+graphics.PreferredBackBufferHeight = dims.view.Height;
 graphics.ApplyChanges();
 
+toolbar.configure( dims.toolbar, Color.White, menu_font );
+
+GraphicsDevice.Clear( Color.White );
+
 } /* new_game() */
+
+
+/***********************************************************
+*
+*   Method:
+*       new_game_same
+*
+*   Description:
+*       Starts a new game.
+*
+***********************************************************/
+
+public void new_game_same()
+{
+new_game( ms_model.field_width, ms_model.field_height, ms_model.mine_count );
+} /* new_game_same() */
+
+
+/***********************************************************
+*
+*   Method:
+*       new_game_beginner
+*
+*   Description:
+*       Starts a new game.
+*
+***********************************************************/
+
+public void new_game_beginner()
+{
+new_game( 9, 9, 10 );
+} /* new_game_beginner() */
+
+
+/***********************************************************
+*
+*   Method:
+*       new_game_intermediate
+*
+*   Description:
+*       Starts a new game.
+*
+***********************************************************/
+
+public void new_game_intermediate()
+{
+new_game( 16, 16, 40 );
+} /* new_game_intermediate() */
+
+
+/***********************************************************
+*
+*   Method:
+*       new_game_expert
+*
+*   Description:
+*       Starts a new game.
+*
+***********************************************************/
+
+public void new_game_expert()
+{
+new_game( 31, 16, 99 );
+} /* new_game_expert() */
 
 
 /***********************************************************
@@ -484,6 +607,14 @@ if( GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed )
     }
 
 /*----------------------------------------------------------
+Check if the toolbar handled the input
+----------------------------------------------------------*/
+if( toolbar.input_handled() )
+    {
+    return;
+    }
+
+/*----------------------------------------------------------
 Update mouse status
 ----------------------------------------------------------*/
 mouse.update( dims );
@@ -492,7 +623,7 @@ mouse.update( dims );
 Check for searching a field
 ----------------------------------------------------------*/
 if( ( ms_mouse_location.FIELD == mouse.capture_left ) &&
-    ( ms_button_status.UNCLICKED == mouse.left ) )
+    ( button_state_type.UNCLICKED == mouse.left ) )
     {
     ms_ctlr.search_field( mouse.mine_loc.X, mouse.mine_loc.Y );
     set_field_image();
@@ -501,7 +632,7 @@ if( ( ms_mouse_location.FIELD == mouse.capture_left ) &&
 /*----------------------------------------------------------
 Check for indenting a field
 ----------------------------------------------------------*/
-if( ( ms_button_status.HELD == mouse.left ) &&
+if( ( button_state_type.HELD == mouse.left ) &&
   ( ( ms_game_status.ACTIVE == ms_model.status ) ||
     ( ms_game_status.INACTIVE == ms_model.status ) ) )
     {
@@ -519,7 +650,7 @@ if( ( ms_button_status.HELD == mouse.left ) &&
 Check for flagging a field
 ----------------------------------------------------------*/
 if( ( ms_mouse_location.FIELD == mouse.capture_right ) &&
-    ( ms_button_status.UNCLICKED == mouse.right ) )
+    ( button_state_type.UNCLICKED == mouse.right ) )
     {
     ms_ctlr.flag_field( mouse.mine_loc.X, mouse.mine_loc.Y );
     set_field_image();
@@ -530,9 +661,9 @@ Check for face clicked
 ----------------------------------------------------------*/
 if( ( ms_mouse_location.FACE == mouse.capture_left ) &&
     ( ms_mouse_location.FACE == mouse.cursor_location ) &&
-    ( ms_button_status.UNCLICKED == mouse.left ) )
+    ( button_state_type.UNCLICKED == mouse.left ) )
     {
-    new_game( 31, 16, 99 );
+    new_game_same();
     }
 
 /*----------------------------------------------------------
@@ -540,7 +671,7 @@ Set the face status
 ----------------------------------------------------------*/
 if( ( ms_mouse_location.FACE == mouse.capture_left ) &&
     ( ms_mouse_location.FACE == mouse.cursor_location ) &&
-    ( ms_button_status.HELD == mouse.left ) )
+    ( button_state_type.HELD == mouse.left ) )
     {
     face_status = ms_face_status.PRESSED;
     }

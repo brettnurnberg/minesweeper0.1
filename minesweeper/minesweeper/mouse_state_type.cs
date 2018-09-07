@@ -1,7 +1,7 @@
 /*********************************************************************
 *
 *   Class:
-*       ms_mouse_state
+*       mouse_state_type
 *
 *   Description:
 *       Contains state of the mouse
@@ -30,18 +30,15 @@ namespace minesweeper {
                              CLASS
 --------------------------------------------------------------------*/
 
-public class ms_mouse_state {
+public class mouse_state_type {
 
 /*--------------------------------------------------------------------
                            ATTRIBUTES
 --------------------------------------------------------------------*/
 
-public button_state_type     left;
-public button_state_type     right;
-public Point                mine_loc;
-public ms_mouse_location    capture_left;
-public ms_mouse_location    capture_right;
-public ms_mouse_location    cursor_location;
+public  button_state_type   left;
+public  button_state_type   right;
+public  Point               cursor;
 private Boolean             prev_left_pressed;
 private Boolean             prev_right_pressed;
 
@@ -52,25 +49,22 @@ private Boolean             prev_right_pressed;
 /***********************************************************
 *
 *   Method:
-*       ms_mouse_state
+*       mouse_state_type
 *
 *   Description:
 *       Constructor.
 *
 ***********************************************************/
 
-public ms_mouse_state()
+public mouse_state_type()
 {
 /*----------------------------------------------------------
 Initialize mouse state
 ----------------------------------------------------------*/
 prev_left_pressed  = false;
 prev_right_pressed = false;
-capture_left    = ms_mouse_location.NONE;
-capture_right   = ms_mouse_location.NONE;
-cursor_location = ms_mouse_location.NONE;
 
-} /* ms_mouse_state() */
+} /* mouse_state_type() */
 
 
 /***********************************************************
@@ -83,34 +77,18 @@ cursor_location = ms_mouse_location.NONE;
 *
 ***********************************************************/
 
-public void update( ms_gui_dimension dims )
+public void update()
 {
 /*----------------------------------------------------------
 Initialize mouse state
 ----------------------------------------------------------*/
 Boolean left_pressed;
 Boolean right_pressed;
-Point mouse_loc;
 
 /*----------------------------------------------------------
-Determine current mouse location
+Determine current mouse cursor location
 ----------------------------------------------------------*/
-mouse_loc = Mouse.GetState().Position;
-
-if( dims.mine_field.Contains( mouse_loc.X, mouse_loc.Y ) )
-    {
-    cursor_location = ms_mouse_location.FIELD;
-    mine_loc = mouse_loc - new Point( dims.mine_field.X, dims.mine_field.Y );
-    mine_loc /= new Point( dims.field_image.Width, dims.field_image.Height );
-    }
-else if( dims.face.Contains( mouse_loc.X, mouse_loc.Y ) )
-    {
-    cursor_location = ms_mouse_location.FACE;
-    }
-else
-    {
-    cursor_location = ms_mouse_location.NONE;
-    }
+cursor = Mouse.GetState().Position;
 
 /*----------------------------------------------------------
 Get the current mouse button state
@@ -181,70 +159,6 @@ Save the previous mouse button states
 ----------------------------------------------------------*/
 prev_left_pressed = left_pressed;
 prev_right_pressed = right_pressed;
-
-/*----------------------------------------------------------
-Get the left click capture state
-----------------------------------------------------------*/
-switch( left )
-    {
-    /*----------------------------------------------------------
-    Capture mouse on click
-    ----------------------------------------------------------*/
-    case button_state_type.CLICKED:
-        capture_left = cursor_location;
-        break;
-
-    /*----------------------------------------------------------
-    Lose field capture upon leaving the field
-    ----------------------------------------------------------*/
-    case button_state_type.UNCLICKED:
-    case button_state_type.HELD:
-        if( ( ms_mouse_location.FIELD == capture_left ) &&
-            ( ms_mouse_location.FIELD != cursor_location ) )
-            {
-            capture_left = ms_mouse_location.NONE;
-            }
-        break;
-
-    /*----------------------------------------------------------
-    No mouse capture for unheld button
-    ----------------------------------------------------------*/
-    case button_state_type.UNHELD:
-        capture_left = ms_mouse_location.NONE;
-        break;
-    }
-
-/*----------------------------------------------------------
-Get the right click capture state
-----------------------------------------------------------*/
-switch( right )
-    {
-    /*----------------------------------------------------------
-    Capture mouse on click
-    ----------------------------------------------------------*/
-    case button_state_type.CLICKED:
-        capture_right = cursor_location;
-        break;
-
-    /*----------------------------------------------------------
-    Lose field capture upon leaving the field
-    ----------------------------------------------------------*/
-    case button_state_type.UNCLICKED:
-    case button_state_type.HELD:
-        if( ( ms_mouse_location.FIELD == capture_right ) &&
-            ( ms_mouse_location.FIELD != cursor_location ) )
-            {
-            capture_right = ms_mouse_location.NONE;
-            }
-        break;
-
-    /*----------------------------------------------------------
-    No mouse capture for unheld button
-    ----------------------------------------------------------*/
-    case button_state_type.UNHELD:
-        capture_right = ms_mouse_location.NONE;
-        break;
-    }
 
 } /* update() */
 

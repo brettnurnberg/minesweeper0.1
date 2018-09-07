@@ -13,6 +13,8 @@
 --------------------------------------------------------------------*/
 
 using System;
+using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 
 /*--------------------------------------------------------------------
                            NAMESPACE
@@ -34,31 +36,17 @@ public class ms_gui_dimension {
                            ATTRIBUTES
 --------------------------------------------------------------------*/
 
-public  int             view_width;
-public  int             view_height;
-public  int             header_height;
-public  int             header_gap;
-public  int             border_width;
-public  int             field_x_min;
-public  int             field_y_min;
-public  int             field_x_max;
-public  int             field_y_max;
-public  int             field_count_x;
-public  int             field_count_y;
-public  int             field_width;
-public  int             digval_width;
-public  int             digval_height;
-public  int             minecount_x;
-public  int             minecount_y;
-public  int             time_x;
-public  int             time_y;
-public  int             face_x_min;
-public  int             face_y_min;
-public  int             face_x_max;
-public  int             face_y_max;
-public  int             face_width;
-public  int             face_height;
-
+public  Rectangle       view;
+public  Rectangle       outer_header;
+public  Rectangle       inner_header;
+public  Rectangle       border_image;
+public  Rectangle       mine_field;
+public  Rectangle       field_image;
+public  Rectangle       digval_image;
+public  Rectangle       minecount;
+public  Rectangle       time;
+public  Rectangle       face;
+public  Rectangle       toolbar;
 
 /*--------------------------------------------------------------------
                             METHODS
@@ -76,17 +64,34 @@ public  int             face_height;
 
 public ms_gui_dimension()
 {
-header_gap = 37;
-border_width = 10;
-digval_width = 13;
-digval_height = 23;
-field_width = 16;
-face_width = 26;
-face_height = 26;
+view.X = 0;
+view.Y = 0;
 
-header_height = header_gap + 2 * border_width;
-field_x_min = border_width;
-field_y_min = header_height;
+border_image.Width = 10;
+border_image.Height = 16;
+digval_image.Width = 13;
+digval_image.Height = 23;
+field_image.Width = 16;
+field_image.Height = 16;
+face.Width = 26;
+face.Height = 26;
+
+toolbar.Height = 25;
+toolbar.X = view.X;
+toolbar.Y = view.Y;
+
+outer_header.Height = 57;
+outer_header.X = view.X;
+outer_header.Y = toolbar.Y + toolbar.Height;
+
+inner_header.Height = outer_header.Height - 2 * border_image.Width;
+inner_header.X = outer_header.X + border_image.Width;
+inner_header.Y = outer_header.Y + border_image.Width;
+
+face.Y = inner_header.Y + ( inner_header.Height - face.Height ) / 2;
+
+mine_field.X = outer_header.X + border_image.Width;
+mine_field.Y = outer_header.Y + outer_header.Height;
 
 } /* ms_gui_dimension() */
 
@@ -106,27 +111,23 @@ public void reset( int width, int height )
 {
 int temp_digval_gap;
 
-view_width = width * field_width + border_width * 2;
-view_height = height * field_width + header_height + border_width;
+view.Width = ( width * field_image.Width ) + ( border_image.Width * 2 );
+view.Height = mine_field.Y + ( height * field_image.Height ) + border_image.Width;
 
-temp_digval_gap = ( header_gap - digval_height ) / 2;
-minecount_y = time_y = border_width + temp_digval_gap;
-minecount_x = minecount_y;
-time_x = view_width - time_y - 3 * digval_width;
+toolbar.Width = view.Width;
 
-field_x_max = field_x_min + width  * field_width;
-field_y_max = field_y_min + height * field_width;
+outer_header.Width = view.Width;
+inner_header.Width = outer_header.Width - ( 2 * border_image.Width );
 
-minecount_x--;
-time_x++;
+temp_digval_gap = ( inner_header.Height - digval_image.Height ) / 2;
+minecount.Y = time.Y = outer_header.Y + border_image.Width + temp_digval_gap;
+minecount.X = inner_header.X + temp_digval_gap - 1;
+time.X = inner_header.X + inner_header.Width - ( 3 * digval_image.Width ) - temp_digval_gap + 1;
 
-field_count_x = width;
-field_count_y = height;
+mine_field.Width = width * field_image.Width;
+mine_field.Height = height * field_image.Height;
 
-face_x_min = ( view_width - face_width ) / 2;
-face_y_min = ( header_height - face_height ) / 2;
-face_x_max = face_x_min + face_width;
-face_y_max = face_y_min + face_height;
+face.X = view.X + ( view.Width - face.Width ) / 2;
 
 } /* reset() */
 
