@@ -40,8 +40,9 @@ public  int             mine_count;
 public  ms_field[,]     mine_field;
 public  int             fields_rem;
 public  int             mines_rem;
-public  long            time;
-public  int             win_time;
+public  long            start_time;
+public  int             current_time;
+public  long            win_time;
 public  ms_face_status  face_status;
 public  ms_game_status  status;
 
@@ -88,7 +89,7 @@ field_width = i_width;
 field_height = i_height;
 mine_count = i_mine_count;
 mines_rem = mine_count;
-time = 0;
+current_time = 0;
 fields_rem = field_height * field_width;
 status = ms_game_status.INACTIVE;
 

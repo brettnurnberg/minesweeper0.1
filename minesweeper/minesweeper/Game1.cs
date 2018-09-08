@@ -222,15 +222,7 @@ Local variables
 ----------------------------------------------------------*/
 int[] mines = new int[3];
 int[] time  = new int[3];
-int game_time = 0;
-
-/*----------------------------------------------------------
-Calculate time
-----------------------------------------------------------*/
-if( ms_model.status == ms_game_status.ACTIVE )
-    {
-    game_time = (int)( ( DateTime.Now.Ticks - ms_model.time ) / 10000000 );
-    }
+int game_time = ms_model.current_time;
 
 if( game_time < 1000 )
     {
@@ -246,7 +238,7 @@ else
 /*----------------------------------------------------------
 Calculate mines remaining
 ----------------------------------------------------------*/
-if( ( ms_model.mines_rem > 0 ) && ( ms_model.status != ms_game_status.LOST ) )
+if( ms_model.mines_rem > 0 )
     {
     mines[2] = ms_model.mines_rem % 10;
     mines[1] = ( ms_model.mines_rem / 10 ) % 10;
@@ -618,6 +610,18 @@ if( toolbar.input_handled() )
 Update mouse status
 ----------------------------------------------------------*/
 mouse.update( dims );
+
+/*----------------------------------------------------------
+Update time
+----------------------------------------------------------*/
+if( ms_model.status == ms_game_status.ACTIVE )
+    {
+    ms_model.current_time = (int)( ( DateTime.Now.Ticks - ms_model.start_time ) / 10000000 );
+    }
+else if( ms_model.status == ms_game_status.INACTIVE )
+    {
+    ms_model.current_time = 0;
+    }
 
 /*----------------------------------------------------------
 Check for searching a field

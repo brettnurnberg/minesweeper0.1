@@ -123,7 +123,7 @@ If the game is just starting, save the start time
 ----------------------------------------------------------*/
 if( ms_game_status.INACTIVE == ms_model.status )
     {
-    ms_model.time = DateTime.Now.Ticks;
+    ms_model.start_time = DateTime.Now.Ticks;
     ms_model.status = ms_game_status.ACTIVE;
 
     if( field.is_mine )
@@ -172,8 +172,9 @@ Game won
 ----------------------------------------------------------*/
 if( ms_model.fields_rem == ms_model.mine_count )
     {
-    //save win time
+    ms_model.win_time = DateTime.Now.Ticks - ms_model.start_time;
     ms_model.status = ms_game_status.WON;
+    ms_model.mines_rem = 0;
     game_won();
     }
 

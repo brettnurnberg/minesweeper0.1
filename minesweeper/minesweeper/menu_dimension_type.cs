@@ -107,12 +107,22 @@ foreach( menu_item_type item in menu.items )
     str_loc.Y = menu_loc.Y + menu_loc.Height + item_spacing;
 
     hglt_loc.Width  = (int)str_size.X + 2 * highlight_spacing;
-    hglt_loc.Height = (int)str_size.Y + item_spacing / 2;
-    hglt_loc.X = (int)str_loc.X - ( hglt_loc.Width - (int)str_size.X ) / 2;
-    hglt_loc.Y = (int)str_loc.Y - ( hglt_loc.Height - (int)str_size.Y ) / 2;
+    hglt_loc.Height = (int)str_size.Y + 2 * item_spacing;
+    hglt_loc.X = highlight_loc.X + 1;
+    hglt_loc.Y = menu_loc.Y + menu_loc.Height;
 
     menu_loc.Height += ( (int)str_size.Y + 2 * item_spacing );
     menu_loc.Width = Math.Max( menu_loc.Width, ( (int)str_size.X + 2 * name_spacing ) );
+
+    if( 0 == i )
+        {
+        hglt_loc.Height--;
+        hglt_loc.Y++;
+        }
+    else if( ( menu.items.Count - 1 ) == i )
+        {
+        hglt_loc.Height--;
+        }
 
     item_str_locs[i] = str_loc;
     item_hglt_locs[i] = hglt_loc;
@@ -120,7 +130,12 @@ foreach( menu_item_type item in menu.items )
     i++;
     }
 
-menu_loc.Height += item_spacing;
+i = 0;
+foreach( menu_item_type item in menu.items )
+    {
+    item_hglt_locs[i].Width = menu_loc.Width - 2;
+    i++;
+    }
 
 } /* menu_dimension_type() */
 

@@ -8,14 +8,9 @@
 *       the entry point.
 *
 *   TODO:
-*       add double mouse release
+*       Add double mouse release
 *       Add option for custom game
 *       Add high score tracking
-*
-*   BUGS:
-*       When should mine count go to zero?
-*       Game time should only zero when a new game is started
-*       Menu Item highlight should be as wide as the menu
 *
 *********************************************************************/
 
