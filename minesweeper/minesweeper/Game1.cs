@@ -55,8 +55,9 @@ Minesweeper view control
 --------------------------------------*/
 ms_mouse_state          mouse;
 ms_gui_dimension        dims;
-toolbar_type             toolbar;
-menu_type                 game_menu;
+toolbar_type            toolbar;
+menu_type               game_menu;
+Boolean                 double_click;
 
 /*--------------------------------------
 Minesweeper view status
@@ -624,10 +625,83 @@ else if( ms_model.status == ms_game_status.INACTIVE )
     }
 
 /*----------------------------------------------------------
+Release double click
+----------------------------------------------------------*/
+if( ( button_state_type.UNHELD == mouse.left  ) &&
+    ( button_state_type.UNHELD == mouse.right ) )
+    {
+    double_click = false;
+    }
+
+/*----------------------------------------------------------
+Check for double click
+----------------------------------------------------------*/
+if( ( ms_mouse_location.FIELD == mouse.capture_left  ) &&
+    ( ms_mouse_location.FIELD == mouse.capture_right ) )
+    {
+    int x = mouse.mine_loc.X;
+    int y = mouse.mine_loc.Y;
+    int flag_count = 0;
+    ms_field field = ms_model.mine_field[x, y];
+
+    double_click = true;
+
+    for( int i = Math.Max( 0, x - 1 ); i <= Math.Min( ms_model.field_width - 1, x + 1 ); i++ )
+    for( int j = Math.Max( 0, y - 1 ); j <= Math.Min( ms_model.field_height - 1, y + 1 ); j++ )
+        {
+        if( ms_model.mine_field[i, j].mine_status == ms_mine_status.FLAGGED )
+            {
+            flag_count++;
+            }
+        }
+
+    set_field_image();
+
+    /*----------------------------------------------------------
+    Double click indenting
+    ----------------------------------------------------------*/
+    if( ( button_state_type.HELD == mouse.left  ) &&
+        ( button_state_type.HELD == mouse.right ) )
+        {
+        for( int i = Math.Max( 0, x - 1 ); i <= Math.Min( ms_model.field_width - 1, x + 1 ); i++ )
+        for( int j = Math.Max( 0, y - 1 ); j <= Math.Min( ms_model.field_height - 1, y + 1 ); j++ )
+            {
+            if( ms_model.mine_field[i, j].mine_status == ms_mine_status.UNCHECKED )
+                {
+                field_status[i, j] = ms_mine_status.CHECKED_0;
+                }
+            }
+        }
+
+    if( ( ms_mine_status.CHECKED_0 < field.mine_status ) &&
+        ( field.mine_status <= ms_mine_status.CHECKED_8 ) &&
+        ( field.mine_count == flag_count ) )
+        {
+        /*----------------------------------------------------------
+        Double click searching
+        ----------------------------------------------------------*/
+        if( ( button_state_type.UNCLICKED == mouse.left  ) ||
+            ( button_state_type.UNCLICKED == mouse.right ) )
+            {
+            for( int i = Math.Max( 0, x - 1 ); i <= Math.Min( ms_model.field_width - 1, x + 1 ); i++ )
+            for( int j = Math.Max( 0, y - 1 ); j <= Math.Min( ms_model.field_height - 1, y + 1 ); j++ )
+                {
+                if( ms_model.mine_field[i, j].mine_status == ms_mine_status.UNCHECKED )
+                    {
+                    ms_ctlr.search_field( i, j );
+                    }
+                }
+            set_field_image();
+            }
+        }
+    }
+
+/*----------------------------------------------------------
 Check for searching a field
 ----------------------------------------------------------*/
-if( ( ms_mouse_location.FIELD == mouse.capture_left ) &&
-    ( button_state_type.UNCLICKED == mouse.left ) )
+else if( ( ms_mouse_location.FIELD == mouse.capture_left ) &&
+    ( button_state_type.UNCLICKED == mouse.left ) &&
+    ( false == double_click ) )
     {
     ms_ctlr.search_field( mouse.mine_loc.X, mouse.mine_loc.Y );
     set_field_image();
@@ -636,9 +710,10 @@ if( ( ms_mouse_location.FIELD == mouse.capture_left ) &&
 /*----------------------------------------------------------
 Check for indenting a field
 ----------------------------------------------------------*/
-if( ( button_state_type.HELD == mouse.left ) &&
+else if( ( button_state_type.HELD == mouse.left ) &&
   ( ( ms_game_status.ACTIVE == ms_model.status ) ||
-    ( ms_game_status.INACTIVE == ms_model.status ) ) )
+    ( ms_game_status.INACTIVE == ms_model.status ) ) &&
+    ( false == double_click ) )
     {
     set_field_image();
 
@@ -653,8 +728,9 @@ if( ( button_state_type.HELD == mouse.left ) &&
 /*----------------------------------------------------------
 Check for flagging a field
 ----------------------------------------------------------*/
-if( ( ms_mouse_location.FIELD == mouse.capture_right ) &&
-    ( button_state_type.UNCLICKED == mouse.right ) )
+else if( ( ms_mouse_location.FIELD == mouse.capture_right ) &&
+    ( button_state_type.CLICKED == mouse.right ) &&
+    ( false == double_click ) )
     {
     ms_ctlr.flag_field( mouse.mine_loc.X, mouse.mine_loc.Y );
     set_field_image();
@@ -679,9 +755,11 @@ if( ( ms_mouse_location.FACE == mouse.capture_left ) &&
     {
     face_status = ms_face_status.PRESSED;
     }
-else if( ( ms_mouse_location.FIELD == mouse.capture_left ) &&
-       ( ( ms_game_status.ACTIVE   == ms_model.status ) ||
-         ( ms_game_status.INACTIVE == ms_model.status ) ) )
+else if( (   ms_mouse_location.FIELD == mouse.capture_left ) &&
+         ( ( ms_game_status.ACTIVE   == ms_model.status ) ||
+           ( ms_game_status.INACTIVE == ms_model.status ) )  &&
+         ( ( !double_click ) ||
+           ( double_click && ms_mouse_location.FIELD == mouse.capture_right ) ) )
     {
     face_status = ms_face_status.MOUSE_DOWN;
     }

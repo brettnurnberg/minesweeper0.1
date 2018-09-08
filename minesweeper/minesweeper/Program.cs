@@ -12,6 +12,10 @@
 *       Add option for custom game
 *       Add high score tracking
 *
+*   DEBUG:
+*       Double click release shouldn't flag or search
+*       Set flag on mouse down
+*
 *********************************************************************/
 
 /*--------------------------------------------------------------------
