@@ -180,7 +180,8 @@ if( null != open_menu )
         {
         if( open_menu.dims.item_hglt_locs[i].Contains( mouse.cursor ) )
             {
-            if( button_state_type.UNHELD == mouse.left )
+            if( ( button_state_type.UNHELD == mouse.left ) ||
+                ( button_state_type.HELD   == mouse.left ) )
                 {
                 item.highlight = true;
                 }

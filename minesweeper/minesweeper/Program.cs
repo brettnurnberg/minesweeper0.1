@@ -8,13 +8,9 @@
 *       the entry point.
 *
 *   TODO:
-*       Add double mouse release
+*       How to do pop-up windows
 *       Add option for custom game
 *       Add high score tracking
-*
-*   DEBUG:
-*       Double click release shouldn't flag or search
-*       Set flag on mouse down
 *
 *********************************************************************/
 
